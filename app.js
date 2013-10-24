@@ -1,6 +1,17 @@
 var request = require('request');
 var util = require('util');
 var config = require('./config.json');
+var debug = true;
+
+function logDebug() {
+    if (debug) {
+        console.log.apply(console, Array.prototype.slice.call(arguments));
+    }
+}
+
+function log() {
+    console.log.apply(console, Array.prototype.slice.call(arguments));
+}
 
 var makeRequestConfig = function (config) {
     return {
@@ -19,44 +30,73 @@ var Worker = function (conf) {
     this.jar = request.jar();
 };
 
+
+Worker.prototype.isLogin = function () {
+    var filter = this.jar.cookies.filter(function (x) {
+        return x.name === '_marrla_uid_'
+    });
+    return filter.length > 0;
+};
+
+Worker.prototype.isSelected = function () {
+    var filter = this.jar.cookies.filter(function (x) {
+        return x.name === '_idle_chara_id_'
+    });
+    return filter.length > 0;
+};
+
 Worker.prototype.fight = function () {
-    console.log('fighting');
     var self = this;
     request(makeRequestConfig({
         url: 'http://idle.marrla.com/f2.aspx',
         data: {x: '', "_": self.tick ? self.tick++ : (self.tick = Date.now())},
         jar: self.jar
     }), function (err, res, body) {
-        if (err || self.jar.cookies.length < 1) {
+        if (err || !self.isLogin()) {
+            log('request failed. login again.');
             process.nextTick(function () {
                 self.login();
             });
         } else if (res.statusCode != 200) {
-            process.nextTick(function () {
+            log('request failed. try again.');
+            setTimeout(function () {
                 self.fight();
+            }, 2000);
+        } else if (!self.isSelected()) {
+            log('request failed. select again.');
+            process.nextTick(function () {
+                self.select();
             });
         } else {
             try {
                 body = JSON.parse(body);
-                if (util.isArray(body)) {
+                if (util.isArray(body) && body.length > 0) {
+                    var tmp = body[body.length - 1];
+                    log(util.format('character %s die:%s exp:%d gold:%d drop:%s',
+                        tmp.cnm, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null'));
                     setTimeout(function () {
                         self.fight();
                     }, body.length * 2000);
                 } else if (body.ffoe) {
+                    var delay = body.ffoe < 1000 ? body.ffoe * 1000 : body.ffoe;
+//                    log('waiting' + (delay / 1000) + '...');
                     setTimeout(function () {
                         self.fight();
-                    }, body.ffoe < 1000 ? body.ffoe * 1000 : body.ffoe);
+                    }, delay);
                 } else {
+//                    log('waiting...');
                     setTimeout(function () {
                         self.fight();
-                    }, 2000);
+                    }, 10000);
                 }
             }
             catch (e) {
-                console.log(e);
+                logDebug(body);
+                logDebug(e);
+                log('response is unhandled. login again.');
                 setTimeout(function () {
-                    self.fight();
-                }, 10000);
+                    self.login();
+                }, 2000);
             }
         }
     });
@@ -64,13 +104,13 @@ Worker.prototype.fight = function () {
 
 Worker.prototype.select = function (id) {
     var self = this;
-    console.log(id ? 'select:' + id : 'selecting');
+    log(id ? 'select:' + id : 'selecting');
     request(makeRequestConfig({
         url: 'http://idle.marrla.com/SelectChara.aspx',
         data: !id ? undefined : {id: id},
         jar: self.jar
     }), function (err, res, body) {
-        if (err || self.jar.cookies.length < 1) {
+        if (err || !self.isLogin()) {
             process.nextTick(function () {
                 self.login();
             });
@@ -79,20 +119,28 @@ Worker.prototype.select = function (id) {
                 self.select();
             })
         } else if (!id) {
-            var regExp = /\?id=(\d+)/gi;
+            var regExp = /<a id="all_chara_rpt_select_link_(\d)".*?<\/a>/ig;
+            var regExp2 = /\?id=(\d+)/i;
             var match = null;
-            var i = 0;
+            var text = '';
+//            var i = 0;
             do {
                 match = regExp.exec(String(body));
-                if (match && i++ == self.config.index) {
-                    id = match[1];
+                if (match && match[1] == self.config.index) {
+                    if ((text = match[0].match(regExp2))) {
+                        id = text[1];
+                    }
                 }
             }
             while (match && !id);
-            process.nextTick(function () {
-                self.select(id);
-            })
-        } else if (id && self.jar.cookies.length < 2) {
+            if (id) {
+                process.nextTick(function () {
+                    self.select(id);
+                })
+            } else {
+                log('not existed index:' + self.config.index);
+            }
+        } else if (id && !self.isSelected()) {
             process.nextTick(function () {
                 self.select();
             })
@@ -106,9 +154,10 @@ Worker.prototype.select = function (id) {
 
 Worker.prototype.login = function () {
     var self = this;
+    self.jar = request.jar();
     var now = Date.now();
     var config = self.config;
-    console.log('login' + config.email);
+    log('login' + config.email);
     var url = "http://www.marrla.com/ajax_login.ashx";
     request(makeRequestConfig({
         url: url,
@@ -121,8 +170,9 @@ Worker.prototype.login = function () {
         },
         jar: self.jar
     }), function (err, res, body) {
-        if (err || self.jar.cookies.length < 1) {
-            console.log(body || err);
+        if (err || !self.isLogin()) {
+            logDebug(body || err);
+            log(config.email + 'login failed.');
             return;
         }
         process.nextTick(function () {
