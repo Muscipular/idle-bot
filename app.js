@@ -47,11 +47,13 @@ Worker.prototype.isSelected = function () {
 
 Worker.prototype.fight = function () {
     var self = this;
+    var fast = self.config.fast;
     request(makeRequestConfig({
         url: 'http://idle.marrla.com/f2.aspx',
-        data: {x: '', "_": self.tick ? self.tick++ : (self.tick = Date.now())},
+        data: {x: fast ? '1' : '', "_": self.tick ? self.tick++ : (self.tick = Date.now())},
         jar: self.jar
     }), function (err, res, body) {
+        var delay = 2000;
         if (err || !self.isLogin()) {
             log('request failed. login again.');
             process.nextTick(function () {
@@ -72,13 +74,14 @@ Worker.prototype.fight = function () {
                 body = JSON.parse(body);
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
-                    log(util.format('character %s die:%s exp:%d gold:%d drop:%s',
-                        tmp.cnm, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null'));
+                    log(util.format('%s[lv%d] die:%s exp:%d gold:%d drop:%s',
+                        tmp.cnm, tmp.clv, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null'));
+                    delay = tmp.tun * 2000;
                     setTimeout(function () {
                         self.fight();
-                    }, body.length * 2000);
+                    }, Math.max(delay, 5000 + Math.random() * 1000));
                 } else if (body.ffoe) {
-                    var delay = body.ffoe < 1000 ? body.ffoe * 1000 : body.ffoe;
+                    delay = body.ffoe < 1000 ? body.ffoe * (1500 + Math.random() * 0.5) : body.ffoe;
 //                    log('waiting' + (delay / 1000) + '...');
                     setTimeout(function () {
                         self.fight();
@@ -127,6 +130,7 @@ Worker.prototype.select = function (id) {
             do {
                 match = regExp.exec(String(body));
                 if (match && match[1] == self.config.index) {
+                    id = 0;
                     if ((text = match[0].match(regExp2))) {
                         id = text[1];
                     }
@@ -138,7 +142,14 @@ Worker.prototype.select = function (id) {
                     self.select(id);
                 })
             } else {
-                log('not existed index:' + self.config.index);
+                if (id === undefined) {
+                    log('not existed index:' + self.config.index);
+                } else {
+                    log('banned,wait for 16 minutes.');
+                    setTimeout(function () {
+                        self.select();
+                    }, 1000 * 60 * 16);
+                }
             }
         } else if (id && !self.isSelected()) {
             process.nextTick(function () {
