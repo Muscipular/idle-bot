@@ -184,7 +184,9 @@ Worker.prototype.login = function () {
         if (err || !self.isLogin()) {
             logDebug(body || err);
             log(config.email + 'login failed.');
-            return;
+            setTimeout(function () {
+                self.login();
+            }, 2000);
         }
         process.nextTick(function () {
             self.select();
