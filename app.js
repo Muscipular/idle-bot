@@ -76,7 +76,7 @@ Worker.prototype.fight = function () {
                     var tmp = body[body.length - 1];
                     log(util.format('%s[lv%d] die:%s exp:%d gold:%d drop:%s',
                         tmp.cnm, tmp.clv, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null'));
-                    delay = tmp.tun * 2000;
+                    delay = tmp.tun * 2000 + Math.random() * 2000;
                     setTimeout(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
@@ -187,10 +187,11 @@ Worker.prototype.login = function () {
             setTimeout(function () {
                 self.login();
             }, 2000);
+        } else {
+            process.nextTick(function () {
+                self.select();
+            })
         }
-        process.nextTick(function () {
-            self.select();
-        })
     });
     return self;
 };
