@@ -2,6 +2,7 @@ var request = require('request');
 var util = require('util');
 var config = require('./config.json');
 var debug = true;
+var maxShortRequest = 3;
 
 function logDebug() {
     if (debug) {
@@ -28,8 +29,25 @@ var makeRequestConfig = function (config) {
 var Worker = function (conf) {
     this.config = conf;
     this.jar = request.jar();
+    this.shortRequest = 0;
 };
 
+Worker.prototype.next = function (fn, delay) {
+    var self = this;
+    delay = delay || 0;
+    if (delay < 2000) {
+        self.shortRequest++;
+    }
+    if (self.shortRequest > 3) {
+        delay = 5000 + Math.random() * 1500;
+        self.shortRequest = 0;
+    }
+    if (delay > 0) {
+        setTimeout(fn, delay);
+    } else {
+        process.nextTick(fn);
+    }
+};
 
 Worker.prototype.isLogin = function () {
     var filter = this.jar.cookies.filter(function (x) {
@@ -56,17 +74,17 @@ Worker.prototype.fight = function () {
         var delay = 2000;
         if (err || !self.isLogin()) {
             log('request failed. login again.');
-            process.nextTick(function () {
+            self.next(function () {
                 self.login();
             });
         } else if (res.statusCode != 200) {
             log('request failed. try again.');
-            setTimeout(function () {
+            self.next(function () {
                 self.fight();
-            }, 2000);
+            }, 2000 + Math.random() * 300);
         } else if (!self.isSelected()) {
             log('request failed. select again.');
-            process.nextTick(function () {
+            self.next(function () {
                 self.select();
             });
         } else {
@@ -77,18 +95,18 @@ Worker.prototype.fight = function () {
                     log(util.format('%s[lv%d] die:%s exp:%d gold:%d drop:%s',
                         tmp.cnm, tmp.clv, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null'));
                     delay = tmp.tun * 2000 + Math.random() * 2000;
-                    setTimeout(function () {
+                    self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
                 } else if (body.ffoe) {
                     delay = body.ffoe < 1000 ? body.ffoe * (1500 + Math.random() * 0.5) : body.ffoe;
 //                    log('waiting' + (delay / 1000) + '...');
-                    setTimeout(function () {
+                    self.next(function () {
                         self.fight();
                     }, delay);
                 } else {
 //                    log('waiting...');
-                    setTimeout(function () {
+                    self.next(function () {
                         self.fight();
                     }, 10000);
                 }
@@ -97,7 +115,7 @@ Worker.prototype.fight = function () {
                 logDebug(body);
                 logDebug(e);
                 log('response is unhandled. login again.');
-                setTimeout(function () {
+                self.next(function () {
                     self.login();
                 }, 2000);
             }
@@ -114,11 +132,11 @@ Worker.prototype.select = function (id) {
         jar: self.jar
     }), function (err, res, body) {
         if (err || !self.isLogin()) {
-            process.nextTick(function () {
+            self.next(function () {
                 self.login();
             });
         } else if (res.statusCode != 200) {
-            process.nextTick(function () {
+            self.next(function () {
                 self.select();
             })
         } else if (!id) {
@@ -138,7 +156,7 @@ Worker.prototype.select = function (id) {
             }
             while (match && !id);
             if (id) {
-                process.nextTick(function () {
+                self.next(function () {
                     self.select(id);
                 })
             } else {
@@ -146,17 +164,17 @@ Worker.prototype.select = function (id) {
                     log('not existed index:' + self.config.index);
                 } else {
                     log('banned,wait for 16 minutes.');
-                    setTimeout(function () {
+                    self.next(function () {
                         self.select();
                     }, 1000 * 60 * 16);
                 }
             }
         } else if (id && !self.isSelected()) {
-            process.nextTick(function () {
+            self.next(function () {
                 self.select();
             })
         } else {
-            process.nextTick(function () {
+            self.next(function () {
                 self.fight();
             })
         }
@@ -184,11 +202,11 @@ Worker.prototype.login = function () {
         if (err || !self.isLogin()) {
             logDebug(body || err);
             log(config.email + 'login failed.');
-            setTimeout(function () {
+            self.next(function () {
                 self.login();
             }, 2000);
         } else {
-            process.nextTick(function () {
+            self.next(function () {
                 self.select();
             })
         }
