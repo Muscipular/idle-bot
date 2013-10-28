@@ -2,7 +2,7 @@
 var request = require('request');
 var util = require('util');
 var debug = true;
-var maxShortRequest = 3;
+var maxShortRequest = 5;
 
 function logDebug(format) {
     if (debug) {
@@ -32,7 +32,8 @@ var makeRequestConfig = function (config) {
             "Referer": config.referer
         },
         qs: config.data,
-        jar: config.jar
+        jar: config.jar,
+        timeout: 15000
     };
 };
 
@@ -47,6 +48,8 @@ Worker.prototype.next = function (fn, delay) {
     delay = delay || 0;
     if (delay < 2000) {
         self.shortRequest++;
+    } else {
+        self.shortRequest = self.shortRequest === 0 ? 0 : self.shortRequest - 1;
     }
     if (self.shortRequest > maxShortRequest) {
         delay = 5000 + Math.random() * 1500;
@@ -109,8 +112,8 @@ Worker.prototype.fight = function () {
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
                     delay = tmp.tun * 2000 + Math.random() * 2000;
-                    log('%s[lv%d] die:%s exp:%d gold:%d drop:%s tun:%d',
-                        tmp.cnm, tmp.clv, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null', tmp.tun);
+                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d drop:%s tun:%d',
+                        tmp.cnm, tmp.clv, parseInt(tmp.mxp * 10000 / tmp.nxp) / 100, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null', tmp.tun);
                     self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
@@ -202,7 +205,7 @@ Worker.prototype.login = function () {
     self.jar = request.jar();
     var now = Date.now();
     var config = self.config;
-    log('login' + config.email);
+    log('login %s:%d', config.email, config.index);
     var url = "http://www.marrla.com/ajax_login.ashx";
     request(makeRequestConfig({
         url: url,
@@ -240,5 +243,5 @@ process.on('message', function (conf) {
     logDebug(process.pid);
     setTimeout(function () {
         new Worker(conf).login();
-    }, Math.random() * 5000);
+    }, Math.random() * 3000);
 });
