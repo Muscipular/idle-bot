@@ -38,7 +38,7 @@ Worker.prototype.next = function (fn, delay) {
     if (delay < 2000) {
         self.shortRequest++;
     }
-    if (self.shortRequest > 3) {
+    if (self.shortRequest > maxShortRequest) {
         delay = 5000 + Math.random() * 1500;
         self.shortRequest = 0;
     }
@@ -51,14 +51,14 @@ Worker.prototype.next = function (fn, delay) {
 
 Worker.prototype.isLogin = function () {
     var filter = this.jar.cookies.filter(function (x) {
-        return x.name === '_marrla_uid_'
+        return x.name === '_marrla_uid_';
     });
     return filter.length > 0;
 };
 
 Worker.prototype.isSelected = function () {
     var filter = this.jar.cookies.filter(function (x) {
-        return x.name === '_idle_chara_id_'
+        return x.name === '_idle_chara_id_';
     });
     return filter.length > 0;
 };
@@ -72,7 +72,13 @@ Worker.prototype.fight = function () {
         jar: self.jar
     }), function (err, res, body) {
         var delay = 2000;
-        if (err || !self.isLogin()) {
+        if (err) {
+            logDebug(err);
+            log('request failed. try again.');
+            self.next(function () {
+                self.fight();
+            }, 2000);
+        } else if (!self.isLogin()) {
             log('request failed. login again.');
             self.next(function () {
                 self.login();
@@ -199,9 +205,14 @@ Worker.prototype.login = function () {
         },
         jar: self.jar
     }), function (err, res, body) {
-        if (err || !self.isLogin()) {
-            logDebug(body || err);
-            log(config.email + 'login failed.');
+        if (err) {
+            logDebug(err);
+            self.next(function () {
+                self.select();
+            }, 2000);
+        } else if (!self.isLogin()) {
+            logDebug(body);
+            log(util.format('%s:%d login failed.'), config.email, config.index);
             self.next(function () {
                 self.login();
             }, 2000);
