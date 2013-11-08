@@ -2,16 +2,22 @@
     {
         "email": "",
         "password": "",
-        "index": 0
+        "index": 0,
+        "fast": true,
+        "server": "1"
     },
     {
         "email": "",
         "password": "",
-        "index": 0
+        "index": 0,
+        "fast": true,
+        "server": "1"
     },
     {
         "email": "",
         "password": "",
-        "index": 0
+        "index": 0,
+        "fast": true,
+        "server": "1"
     }
 ]

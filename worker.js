@@ -3,6 +3,10 @@ var request = require('request');
 var util = require('util');
 var debug = true;
 var maxShortRequest = 5;
+var severList = {
+    "1": "http://idle.marrla.com/",
+    "2": "http://idle2.marrla.com/"
+};
 
 function logDebug(format) {
     if (debug) {
@@ -80,7 +84,7 @@ Worker.prototype.fight = function () {
     var self = this;
     var fast = self.config.fast;
     request(makeRequestConfig({
-        url: 'http://idle.marrla.com/f2.aspx',
+        url: severList[self.config.server || '1'] + 'f2.aspx',
         data: {x: fast ? '1' : '', "_": self.tick ? self.tick++ : (self.tick = Date.now())},
         jar: self.jar
     }), function (err, res, body) {
@@ -146,7 +150,7 @@ Worker.prototype.select = function (id) {
     var self = this;
     log(id ? 'select:' + id : 'selecting');
     request(makeRequestConfig({
-        url: 'http://idle.marrla.com/SelectChara.aspx',
+        url: severList[self.config.server || '1'] + 'SelectChara.aspx',
         data: !id ? undefined : {id: id},
         jar: self.jar
     }), function (err, res, body) {
@@ -209,7 +213,7 @@ Worker.prototype.login = function () {
     var url = "http://www.marrla.com/ajax_login.ashx";
     request(makeRequestConfig({
         url: url,
-        referer: "http://idle.marrla.com/Login.aspx",
+        referer: severList[config.server || '1'] + "Login.aspx",
         data: {
             jsonp: 'jQuery' + parseInt(Math.random() * 10000000) + "_" + now,
             email: config.email,
