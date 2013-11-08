@@ -3,13 +3,17 @@ idle-bot
 
 1. 安装[nodejs](http://nodejs.org/download/)
 
-2. 打开命令行(cmd.exe) 进入 脚本所在目录
+2. 下载[脚本](https://github.com/Muscipular/idle-bot/archive/master.zip) 并解压到一个目录
 
-3. 执行 ```npm u```
+3. 打开命令行(cmd.exe) 进入 脚本所在目录
 
-4. 将```config-template.json```重命名为```config.json```，并根据实际修改配置
+4. 执行 ```npm u```
 
-5. 执行 ```node app.js```
+5. 将```config-template.json```重命名为```config.json```，并根据实际修改配置
+
+6. 执行 ```node app.js```
+
+7. OK，你现在已经成功开始挂机了
 
 配置内容
 ```javascript
