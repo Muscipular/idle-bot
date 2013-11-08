@@ -3,6 +3,8 @@ idle-bot
 
 1. 安装[nodejs](http://nodejs.org/download/)
 
+2. 打开命令行(cmd.exe) 进入 脚本所在目录
+
 2. 执行 ```npm u```
 
 3. 将```config-template.json```重命名为```config.json```，并根据实际修改配置
