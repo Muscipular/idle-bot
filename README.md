@@ -1,11 +1,13 @@
 idle-bot
 ========
 
-1. 安装(nodejs)[http://nodejs.org/download/]
+1. 安装[nodejs](http://nodejs.org/download/)
 
 2. 执行 ```npm u```
 
-3. 将```config-template.json```重命名为```config.json```
+3. 将```config-template.json```重命名为```config.json```，并根据实际修改配置
+
+4. 执行 ```node app.js```
 
 配置内容
 ```javascript
@@ -18,4 +20,3 @@ idle-bot
 }
 ```
 
-4. 执行 ```node app.js```
