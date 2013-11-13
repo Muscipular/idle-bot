@@ -116,8 +116,8 @@ Worker.prototype.fight = function () {
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
                     delay = tmp.tun * 2000 + Math.random() * 2000;
-                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d drop:%s tun:%d',
-                        tmp.cnm, tmp.clv, parseInt(tmp.mxp * 10000 / tmp.nxp) / 100, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null', tmp.tun);
+                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d drop:%s tun:%d ept:%d/tun',
+                        tmp.cnm, tmp.clv, (parseInt(tmp.mxp * 10000 / tmp.nxp) / 100).toFixed(2), tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null', tmp.tun, parseInt((tmp.exp || 0) / tmp.tun));
                     self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
