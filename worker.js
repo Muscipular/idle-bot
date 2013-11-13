@@ -45,6 +45,11 @@ var Worker = function (conf) {
     this.config = conf;
     this.jar = request.jar();
     this.shortRequest = 0;
+    this.lv = 0;
+    this.expTotal = 0;
+    this.expLevel = 0;
+    this.tunTotal = 0;
+    this.tunLevel = 0;
 };
 
 Worker.prototype.next = function (fn, delay) {
@@ -115,9 +120,22 @@ Worker.prototype.fight = function () {
                 body = JSON.parse(body);
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
+                    var expp = (parseInt(tmp.mxp * 10000 / tmp.nxp) / 100).toFixed(2);
                     delay = tmp.tun * 2000 + Math.random() * 2000;
-                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d drop:%s tun:%d ept:%d/tun',
-                        tmp.cnm, tmp.clv, (parseInt(tmp.mxp * 10000 / tmp.nxp) / 100).toFixed(2), tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.equip || 'null', tmp.tun, parseInt((tmp.exp || 0) / tmp.tun));
+                    if(tmp.clv > self.lv) {
+                        self.lv = +tmp.clv;
+                        self.expLevel = +tmp.exp || 0;
+                        self.tunLevel = +tmp.tun || 0;
+                    } else {
+                        self.expLevel += +tmp.exp || 0;
+                        self.tunLevel += +tmp.tun || 0;
+                    }
+                    self.expTotal += +tmp.exp || 0;
+                    self.tunTotal += +tmp.tun || 0;
+                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d tun:%d ept:%d/tun\n'+
+                    	'%s[lv%d/%d%] ea:%d el:%d at:%d lt:%d drop:%s',
+                        tmp.cnm, tmp.clv, expp, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.tun, parseInt((tmp.exp || 0) / tmp.tun),
+                        tmp.cnm, tmp.clv, expp, self.expTotal, self.expLevel, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
                     self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
