@@ -132,9 +132,9 @@ Worker.prototype.fight = function () {
                     }
                     self.expTotal += +tmp.exp || 0;
                     self.tunTotal += +tmp.tun || 0;
-                    log('%s[lv%d(%d%)] die:%s gold:%d exp:%d tun:%d ept:%d\n'+
+                    log('%s[lv%d(%d%)] die:%s gold:%d exp:%d(+%d%) tun:%d ept:%d\n'+
                     	'%s ae:%d at:%d ap:%d lp:%d drop:%s',
-                        tmp.cnm, tmp.clv, expp, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.tun, parseInt((tmp.exp || 0) / tmp.tun),
+                        tmp.cnm, tmp.clv, expp, tmp.die, tmp.gold || 0, tmp.exp || 0, ((tmp.exp || 0) * 100 / tmp.nxp).toFixed(2), tmp.tun, parseInt((tmp.exp || 0) / tmp.tun),
                         tmp.cnm.replace(/./g,'+'), self.expTotal, self.tunTotal, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
                     self.next(function () {
                         self.fight();
