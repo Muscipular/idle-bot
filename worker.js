@@ -120,7 +120,7 @@ Worker.prototype.fight = function () {
                 body = JSON.parse(body);
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
-                    var expp = (parseInt(tmp.mxp * 10000 / tmp.nxp) / 100).toFixed(2);
+                    var expp = (tmp.mxp * 100 / tmp.nxp).toFixed(2);
                     delay = tmp.tun * 2000 + Math.random() * 2000;
                     if(tmp.clv > self.lv) {
                         self.lv = +tmp.clv;
@@ -132,10 +132,10 @@ Worker.prototype.fight = function () {
                     }
                     self.expTotal += +tmp.exp || 0;
                     self.tunTotal += +tmp.tun || 0;
-                    log('%s[lv%d/%d%] die:%s exp:%d gold:%d tun:%d ept:%d/tun\n'+
-                    	'%s[lv%d/%d%] ea:%d el:%d at:%d lt:%d drop:%s',
+                    log('%s[lv%d(%d%)] die:%s gold:%d exp:%d tun:%d ept:%d\n'+
+                    	'%s ae:%d at:%d ap:%d lp:%d drop:%s',
                         tmp.cnm, tmp.clv, expp, tmp.die, tmp.gold || 0, tmp.exp || 0, tmp.tun, parseInt((tmp.exp || 0) / tmp.tun),
-                        tmp.cnm, tmp.clv, expp, self.expTotal, self.expLevel, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
+                        tmp.cnm.replace(/./g,'+'), self.expTotal, self.tunTotal, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
                     self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
