@@ -141,7 +141,9 @@ Worker.prototype.fight = function () {
                     }, Math.max(delay, 5000 + Math.random() * 1000));
                 } else if (body.ffoe) {
                     delay = body.ffoe < 1000 ? body.ffoe * (1500 + Math.random() * 0.5) : body.ffoe;
-//                    log('waiting' + (delay / 1000) + '...');
+                    self.expTotal += +body.ffoe || 0;
+                    self.tunTotal += +body.ffoe || 0;
+                    //                    log('waiting' + (delay / 1000) + '...');
                     self.next(function () {
                         self.fight();
                     }, delay);
