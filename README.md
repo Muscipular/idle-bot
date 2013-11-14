@@ -28,3 +28,5 @@ idle-bot
 }
 ```
 
+## 其他脚本
+详情看[wiki](https://github.com/Muscipular/idle-bot/wiki);
