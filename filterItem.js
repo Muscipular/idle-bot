@@ -30,6 +30,7 @@
             a();
         }
     }));
+    el.append($('<span></span>').hide());
     var item = [];
     var lock = false;
     var lastDeferred = null;
@@ -64,8 +65,10 @@
                             //     }).map(function(x) {
                             //         return x.name
                             //     })));
+                            $('span', el).hide();
                             return;
                         }
+                        $('span', el).text((+data[0].p * 100 / +data[0].tp).toFixed(0) + '%').show();
                         item = item.concat(data.slice(1));
                         setTimeout(function () {
                             $.ajax({
