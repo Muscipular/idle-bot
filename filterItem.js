@@ -44,6 +44,7 @@
             last = Date.now();
             lastDeferred = $.Deferred();
             lock = true;
+            item = [];
             var i = 1;
             (function k() {
                 $.ajax({
