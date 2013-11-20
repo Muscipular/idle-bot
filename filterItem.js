@@ -30,6 +30,9 @@
             a();
         }
     }));
+    el.append($('<input type="button" id="btnFilterItemReload" value="重新加载"/>').on('click', function () {
+        updateItemList();
+    }));
     el.append($('<span></span>').hide());
     var item = [];
     var lock = false;
