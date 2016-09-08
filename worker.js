@@ -5,7 +5,8 @@ var debug = true;
 var maxShortRequest = 5;
 var severList = {
     "1": "http://idle.marrla.com/",
-    "2": "http://idle2.marrla.com/"
+    "2": "http://idle2.marrla.com/",
+    "3": "http://s2.idle2.marrla.com:8080/",
 };
 
 function logDebug(format) {
@@ -72,15 +73,15 @@ Worker.prototype.next = function (fn, delay) {
 };
 
 Worker.prototype.isLogin = function () {
-    var filter = this.jar.cookies.filter(function (x) {
-        return x.name === '_marrla_uid_';
+    var filter = this.jar.getCookies(severList[this.config.server || '1']).filter(function (x) {
+        return x.key === '_marrla_uid_';
     });
     return filter.length > 0;
 };
 
 Worker.prototype.isSelected = function () {
-    var filter = this.jar.cookies.filter(function (x) {
-        return x.name === '_idle_chara_id_';
+    var filter = this.jar.getCookies(severList[this.config.server || '1']).filter(function (x) {
+        return x.key === '_idle_chara_id_';
     });
     return filter.length > 0;
 };
@@ -120,10 +121,12 @@ Worker.prototype.fight = function () {
                 body = JSON.parse(body);
                 if (util.isArray(body) && body.length > 0) {
                     var tmp = body[body.length - 1];
-                    var expp = (tmp.mxp * 100 / tmp.nxp).toFixed(2);
+                    var nextExp = tmp.nxp;
+                    var expp = (tmp.mxp * 100 / nextExp).toFixed(2);
                     delay = tmp.tun * 2000 + Math.random() * 2000;
-                    if(tmp.clv > self.lv) {
-                        self.lv = +tmp.clv;
+                    var charaLv = tmp.clv;
+                    if(charaLv > self.lv) {
+                        self.lv = +charaLv;
                         self.expLevel = +tmp.exp || 0;
                         self.tunLevel = +tmp.tun || 0;
                     } else {
@@ -132,10 +135,14 @@ Worker.prototype.fight = function () {
                     }
                     self.expTotal += +tmp.exp || 0;
                     self.tunTotal += +tmp.tun || 0;
+                    var charaName = tmp.cnm;
+                    var dieChara = tmp.die;
+                    var goldGet = tmp.gold || 0;
+                    var expGet = tmp.exp || 0;
                     log('%s[lv%d(%d%)] die:%s gold:%d exp:%d(+%d%) tun:%d ept:%d\n'+
                     	'%s ae:%d at:%d ap:%d lp:%d drop:%s',
-                        tmp.cnm, tmp.clv, expp, tmp.die, tmp.gold || 0, tmp.exp || 0, ((tmp.exp || 0) * 100 / tmp.nxp).toFixed(2), tmp.tun, parseInt((tmp.exp || 0) / tmp.tun),
-                        tmp.cnm.replace(/./g,'+'), self.expTotal, self.tunTotal, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
+                        charaName, charaLv, expp, dieChara, goldGet, expGet, ((expGet) * 100 / nextExp).toFixed(2), tmp.tun, parseInt((expGet) / tmp.tun),
+                        charaName.replace(/./g,'+'), self.expTotal, self.tunTotal, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
                     self.next(function () {
                         self.fight();
                     }, Math.max(delay, 5000 + Math.random() * 1000));
