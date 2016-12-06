@@ -90,7 +90,7 @@ Worker.prototype.fight = function () {
     var self = this;
     var fast = self.config.fast;
     request(makeRequestConfig({
-        url: severList[self.config.server || '1'] + 'f2.aspx',
+        url: severList[self.config.server || '1'] + (self.config.inner ? 'f.aspx' : 'f2.aspx'),
         data: {x: fast ? '1' : '', "_": self.tick ? self.tick++ : (self.tick = Date.now())},
         jar: self.jar
     }), function (err, res, body) {
@@ -145,7 +145,7 @@ Worker.prototype.fight = function () {
                         charaName.replace(/./g,'+'), self.expTotal, self.tunTotal, parseInt(self.expTotal / self.tunTotal), parseInt(self.expLevel / self.tunLevel), tmp.equip || 'null');
                     self.next(function () {
                         self.fight();
-                    }, Math.max(delay, 5000 + Math.random() * 1000));
+                    }, Math.max(delay, 2000));
                 } else if (body.ffoe) {
                     delay = body.ffoe < 1000 ? body.ffoe * (1500 + Math.random() * 0.5) : body.ffoe;
                     self.tunLevel += +body.ffoe || 0;
@@ -164,7 +164,7 @@ Worker.prototype.fight = function () {
             catch (e) {
                 logDebug(body);
                 logDebug(e);
-                log('response is unhandled. login again.');
+                log('response is unhandled. login again. ' + self.config.email + "@" + self.config.index);
                 self.next(function () {
                     self.login();
                 }, 2000);
@@ -276,3 +276,4 @@ process.on('message', function (conf) {
         new Worker(conf).login();
     }, Math.random() * 3000);
 });
+
